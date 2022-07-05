@@ -4,6 +4,7 @@ import androidx.annotation.ColorInt;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 public class CreateAccount extends AppCompatActivity {
@@ -32,6 +34,7 @@ public class CreateAccount extends AppCompatActivity {
     EditText email, enterPassword, checkPassword;
     ImageView redx;
     TextView mismatch, invalid_email, invalid_password;
+    DatabaseHelper mDatabaseHelper;
 
 
     @Override
@@ -47,6 +50,7 @@ public class CreateAccount extends AppCompatActivity {
         mismatch = findViewById(R.id.mismatch);
         invalid_email = findViewById(R.id.invalid_email);
         invalid_password = findViewById(R.id.invalid_password);
+        mDatabaseHelper = new DatabaseHelper(this);
         btnNext.setVisibility(View.INVISIBLE);
         redx.setVisibility(View.GONE);
         mismatch.setVisibility(View.GONE);
@@ -57,9 +61,7 @@ public class CreateAccount extends AppCompatActivity {
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String emailInput = email.getText().toString();
-
-                Toast.makeText(getApplicationContext(),emailInput, Toast.LENGTH_SHORT).show();
+                AddData(email.getText().toString());
                 openHomePage();
             }
         });
@@ -102,9 +104,22 @@ public class CreateAccount extends AppCompatActivity {
                 }
                 else
                 {
-
                     invalid_email.setVisibility(View.INVISIBLE);
                     redx.setVisibility(View.INVISIBLE);
+                    //get the data and append to a list
+                    Cursor data = mDatabaseHelper.getData();
+                    ArrayList<String> listData = new ArrayList<>();
+                    while(data.moveToNext()){
+                        if (data.toString().equals(email)){
+                            Toast toast = Toast.makeText(getApplicationContext(), "email already exist", Toast.LENGTH_SHORT);
+                            toast.show();
+                            invalid_email.setVisibility(View.VISIBLE);
+                        }
+                        else
+                            invalid_email.setVisibility(View.INVISIBLE);
+
+//                        listData.add(data.getString(0));
+                    }
                     if (validateEmail() && validatePassword() && confirmPassword()){
                         btnNext.setVisibility(View.VISIBLE);
                     }
@@ -230,5 +245,17 @@ public class CreateAccount extends AppCompatActivity {
     private void openHomePage() {
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
+    }
+
+    public void AddData(String newEntry){
+        boolean insertData = mDatabaseHelper.addData(newEntry);
+
+        if (insertData){
+            Toast toast = Toast.makeText(this, "Account Created", Toast.LENGTH_SHORT);
+        }
+        else{
+            Toast toast = Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT);
+
+        }
     }
 }
